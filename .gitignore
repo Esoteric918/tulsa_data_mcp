@@ -1,0 +1,21 @@
+# secrets
+.env
+
+# python
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# logs
+*.log
+
+# local Claude Code settings (machine-specific, not shared)
+.claude/settings.local.json
+
+# OS cruft
+.DS_Store
