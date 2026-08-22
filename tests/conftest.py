@@ -162,3 +162,29 @@ def subscription_updated_payload(subscription, price_id, status="active"):
         "status": status,
         "items": {"data": [{"price": {"id": price_id, "recurring": price.recurring.to_dict()}}]},
     }
+
+
+def insert_api_key(owner_name="pytest-key", monthly_quota=None, rate_limit_per_minute=None,
+                    revoked_at=None, expires_at=None, stripe_customer_id=None, plan_tier=None):
+    """Inserts an api_keys row directly (no Stripe/checkout involved) and
+    returns (raw_key, key_id) - the generic low-level primitive auth/quota
+    tests build on, distinct from the Stripe-backed checkout() helper in
+    test_billing.py."""
+    import secrets
+    from auth import hash_key
+
+    raw_key = secrets.token_urlsafe(32)
+    key_hash = hash_key(raw_key)
+    with get_cursor(commit=True) as cur:
+        cur.execute(
+            """
+            INSERT INTO api_keys (key_hash, owner_name, monthly_quota, rate_limit_per_minute,
+                                   revoked_at, expires_at, stripe_customer_id, plan_tier)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+            RETURNING id
+            """,
+            (key_hash, owner_name, monthly_quota, rate_limit_per_minute,
+             revoked_at, expires_at, stripe_customer_id, plan_tier),
+        )
+        key_id = cur.fetchone()["id"]
+    return raw_key, key_id
