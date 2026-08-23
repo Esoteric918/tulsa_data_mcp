@@ -13,13 +13,15 @@ design):
   RequestException (including raise_for_status() failing on a different
   status code) gets exponential backoff (2**attempt). After MAX_RETRIES,
   fetch_page returns None rather than raising or looping forever.
-- upsert_record's ON CONFLICT clause only refreshes 6 columns on re-sync:
-  owner_name, legal_description, sale_date, sale_price, total_acct_value,
-  last_synced_at. Every other column (property_type, year_built, baths,
-  gross_sf, total_imp_value, ...) is set on first insert only and never
-  updated on a later re-sync even if the source data changes. Tested
-  explicitly below rather than assumed - this is real current behavior,
-  not something this test file changes.
+- upsert_record's ON CONFLICT clause originally refreshed only 6 of ~20
+  columns on re-sync (owner_name, legal_description, sale_date,
+  sale_price, total_acct_value, last_synced_at) - everything else
+  (property_type, year_built, baths, gross_sf, total_imp_value, ...) was
+  set on first insert only and never updated on a later re-sync even if
+  the source data changed. Found by this test suite; fixed in ingest.py
+  to refresh every column except account_no (the conflict key) and id
+  (serial PK). test_rerun_with_changed_source_data_updates_every_field
+  below sweeps every field so this can't regress silently again.
 
 Side effect worth knowing about: importing ingest.py runs
 logging.basicConfig(handlers=[logging.FileHandler("ingest.log"), ...]) at
@@ -297,20 +299,40 @@ class TestUpsertIdempotency:
         row = _property_row("ACCT-REVAL")
         assert row["total_acct_value"] == 175000
 
-    def test_rerun_with_changed_value_on_a_non_synced_field_does_not_update_it(self):
-        """Real current behavior, confirmed by reading the ON CONFLICT
-        clause: property_type isn't in the UPDATE SET list, so a changed
-        source value for it is silently NOT picked up on re-sync."""
-        record1 = ingest.clean_record(make_attrs(AccountNo="ACCT-STALE", PropertyType="Residential"))
+    def test_rerun_with_changed_source_data_updates_every_field(self):
+        """Regression test for the ON CONFLICT gap where only 6 of ~20
+        columns were refreshed on re-sync - see ingest.py's upsert_record.
+        Changes every field that can legitimately change at the source
+        (everything except account_no) to a different value and
+        confirms each one individually lands, not just the handful that
+        happened to already work. A future regression that drops any
+        single column back out of the SET clause will fail this loop on
+        that specific field, not just pass silently."""
+        account_no = "ACCT-FULL-RESYNC"
+        record1 = ingest.clean_record(make_attrs(AccountNo=account_no))
         with get_cursor(commit=True) as cur:
             ingest.upsert_record(cur, record1)
+        first_synced_at = _property_row(account_no)["last_synced_at"]
 
-        record2 = ingest.clean_record(make_attrs(AccountNo="ACCT-STALE", PropertyType="Commercial"))
+        record2 = ingest.clean_record(make_attrs(
+            AccountNo=account_no, ParcelNo="PARCEL-2",
+            Owner="John Roe", Address1="2 New Owner Ln", City="Sand Springs", State="TX", ZIPCode="99999",
+            PropertyAddress="456 Elm St", PropertyZIP="74104", PropertyCity="Broken Arrow",
+            Legal="LOT 5 BLK 9", Neighborhood="Brookside", PropertyType="Commercial",
+            SaleDate="01-01-2023", SalePrice=300000, DeedType="Quitclaim",
+            YearBuilt=1999, YearRemodeled=2015, Baths=3.5, Stories=1,
+            GrossSF=3000, GrossAcre=0.5,
+            TotalImpValue=200000, TotalLandValue=50000, TotalAcctValue=250000,
+        ))
         with get_cursor(commit=True) as cur:
             ingest.upsert_record(cur, record2)
 
-        row = _property_row("ACCT-STALE")
-        assert row["property_type"] == "Residential"  # unchanged, despite the source data changing
+        row = _property_row(account_no)
+        for field, expected in record2.items():
+            if field == "account_no":
+                continue
+            assert row[field] == expected, f"{field} did not refresh on re-sync (still {row[field]!r})"
+        assert row["last_synced_at"] > first_synced_at
 
     def test_bad_record_savepoint_rollback_does_not_abort_the_whole_transaction(self):
         bad_record = ingest.clean_record(make_attrs(AccountNo="ACCT-BAD"))

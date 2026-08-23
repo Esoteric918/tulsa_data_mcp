@@ -170,10 +170,29 @@ def upsert_record(cur, r):
                 %(total_imp_value)s, %(total_land_value)s, %(total_acct_value)s, NOW()
             )
             ON CONFLICT (account_no) DO UPDATE SET
+                parcel_no = EXCLUDED.parcel_no,
                 owner_name = EXCLUDED.owner_name,
+                owner_address1 = EXCLUDED.owner_address1,
+                owner_city = EXCLUDED.owner_city,
+                owner_state = EXCLUDED.owner_state,
+                owner_zip = EXCLUDED.owner_zip,
+                property_address = EXCLUDED.property_address,
+                property_zip = EXCLUDED.property_zip,
+                property_city = EXCLUDED.property_city,
                 legal_description = EXCLUDED.legal_description,
+                neighborhood = EXCLUDED.neighborhood,
+                property_type = EXCLUDED.property_type,
                 sale_date = EXCLUDED.sale_date,
                 sale_price = EXCLUDED.sale_price,
+                deed_type = EXCLUDED.deed_type,
+                year_built = EXCLUDED.year_built,
+                year_remodeled = EXCLUDED.year_remodeled,
+                baths = EXCLUDED.baths,
+                stories = EXCLUDED.stories,
+                gross_sf = EXCLUDED.gross_sf,
+                gross_acre = EXCLUDED.gross_acre,
+                total_imp_value = EXCLUDED.total_imp_value,
+                total_land_value = EXCLUDED.total_land_value,
                 total_acct_value = EXCLUDED.total_acct_value,
                 last_synced_at = NOW()
         """, r)
