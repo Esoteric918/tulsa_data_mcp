@@ -188,3 +188,48 @@ def insert_api_key(owner_name="pytest-key", monthly_quota=None, rate_limit_per_m
         )
         key_id = cur.fetchone()["id"]
     return raw_key, key_id
+
+
+def make_tool_context(tool_name="test_tool", arguments=None):
+    """A MiddlewareContext stand-in with just what UsageLoggingMiddleware
+    reads (context.message.name/.arguments). Values are set explicitly
+    (not left as auto-MagicMock attributes) because they get written to
+    usage_log - a MagicMock there would fail psycopg2's type adaptation."""
+    context = MagicMock()
+    context.message.name = tool_name
+    context.message.arguments = arguments or {}
+    return context
+
+
+def run_pipeline(access_token, rate_limiter, tool_name="test_tool", tool_result="ok"):
+    """Composes the real server.py middleware chain - rate limiting
+    (outermost) -> quota -> usage logging (innermost) -> the actual tool -
+    around a fake tool call. Mirrors mcp.add_middleware() order in
+    server.py exactly, so tests using this exercise the real interaction
+    between middlewares rather than each one in isolation.
+
+    rate_limiter must be passed in (not created here) so its in-memory
+    window state persists/can be inspected across multiple calls within
+    one test - quota and usage-logging middleware are stateless (all their
+    state lives in the DB), so fresh instances per call are harmless."""
+    import asyncio
+    import quota as quota_mod
+    import usage_logging as usage_logging_mod
+
+    quota_mw = quota_mod.QuotaMiddleware()
+    usage_mw = usage_logging_mod.UsageLoggingMiddleware()
+    context = make_tool_context(tool_name)
+
+    async def actual_tool(ctx):
+        return tool_result
+
+    async def usage_call_next(ctx):
+        return await usage_mw.on_call_tool(ctx, actual_tool)
+
+    async def quota_call_next(ctx):
+        return await quota_mw.on_call_tool(ctx, usage_call_next)
+
+    with patch("rate_limit.get_access_token", return_value=access_token), \
+         patch("quota.get_access_token", return_value=access_token), \
+         patch("usage_logging.get_access_token", return_value=access_token):
+        return asyncio.run(rate_limiter.on_request(context, quota_call_next))
