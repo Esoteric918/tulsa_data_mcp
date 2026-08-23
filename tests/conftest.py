@@ -78,7 +78,10 @@ from db import get_cursor  # noqa: E402
 MANUAL_PRICE = os.environ.get("TEST_MANUAL_PRICE_ID", "price_1U4vG0EdXSkCTnpVNfeKKfKN")
 AGENT_PRICE = os.environ.get("TEST_AGENT_PRICE_ID", "price_1U4vKjEdXSkCTnpVUrtSNrM9")
 
-_RESET_TABLES = ["usage_log", "api_keys", "stripe_events", "customer_cooldowns"]
+_RESET_TABLES = [
+    "usage_log", "api_keys", "stripe_events", "customer_cooldowns",
+    "properties", "tax_delinquency",
+]
 
 
 @pytest.fixture(autouse=True)
@@ -201,12 +204,18 @@ def make_tool_context(tool_name="test_tool", arguments=None):
     return context
 
 
-def run_pipeline(access_token, rate_limiter, tool_name="test_tool", tool_result="ok"):
+def run_pipeline(access_token, rate_limiter, tool_name="test_tool", tool_result="ok",
+                  tool_fn=None, arguments=None):
     """Composes the real server.py middleware chain - rate limiting
     (outermost) -> quota -> usage logging (innermost) -> the actual tool -
-    around a fake tool call. Mirrors mcp.add_middleware() order in
+    around a fake or real tool call. Mirrors mcp.add_middleware() order in
     server.py exactly, so tests using this exercise the real interaction
     between middlewares rather than each one in isolation.
+
+    tool_fn, if given, is called with **arguments (a real server.py tool
+    function, e.g. server.search_properties) instead of returning the
+    canned tool_result - lets usage-logging tests exercise a real tool
+    while still going through the genuine middleware chain.
 
     rate_limiter must be passed in (not created here) so its in-memory
     window state persists/can be inspected across multiple calls within
@@ -218,9 +227,11 @@ def run_pipeline(access_token, rate_limiter, tool_name="test_tool", tool_result=
 
     quota_mw = quota_mod.QuotaMiddleware()
     usage_mw = usage_logging_mod.UsageLoggingMiddleware()
-    context = make_tool_context(tool_name)
+    context = make_tool_context(tool_name, arguments)
 
     async def actual_tool(ctx):
+        if tool_fn is not None:
+            return tool_fn(**(ctx.message.arguments or {}))
         return tool_result
 
     async def usage_call_next(ctx):
