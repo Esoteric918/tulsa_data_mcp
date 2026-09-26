@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CountyLayer — Tulsa County Property Data for AI Agents</title>
+<meta name="description" content="Give your AI agents and workflows instant, structured access to 250,000+ Tulsa County property records — owner, address, sale history, and assessed value. No scraping, no manual county lookups.">
+<link rel="canonical" href="https://countylayer.com/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="CountyLayer — Tulsa County Property Data for AI Agents">
+<meta property="og:description" content="Give your AI agents instant, structured access to 250,000+ Tulsa County property records. Plans from $29/mo.">
+<meta property="og:url" content="https://countylayer.com/">
+<!-- og:image intentionally omitted for v1 (text-only design, no image assets yet) - add a real 1200x630 graphic and this tag before any serious social sharing push -->
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="CountyLayer — Tulsa County Property Data for AI Agents">
+<meta name="twitter:description" content="Give your AI agents instant, structured access to 250,000+ Tulsa County property records. Plans from $29/mo.">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --navy: #0f2942;
+    --navy-light: #17395a;
+    --navy-lighter: #244a6e;
+    --accent: #c8952a;
+    --accent-light: #e0ac48;
+    --bg: #ffffff;
+    --bg-alt: #f5f7f9;
+    --border: #e2e8ee;
+    --text: #16202a;
+    --text-muted: #55677a;
+    --mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.55;
+  }
+  img, svg { max-width: 100%; }
+  a { color: inherit; }
+
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px;
+  }
+
+  /* ---------- Nav ---------- */
+  nav.site-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--navy);
+    color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  nav.site-nav .container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 64px;
+  }
+  .wordmark {
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    color: #fff;
+  }
+  .wordmark span { color: var(--accent-light); }
+  .nav-links { display: flex; align-items: center; gap: 28px; }
+  .nav-links a {
+    text-decoration: none;
+    color: rgba(255,255,255,0.85);
+    font-size: 0.95rem;
+  }
+  .nav-links a:hover { color: #fff; }
+  .btn {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    cursor: pointer;
+    border: none;
+    transition: transform 0.08s ease, box-shadow 0.15s ease;
+  }
+  .btn-accent {
+    background: var(--accent);
+    color: #1a1200;
+  }
+  .btn-accent:hover { background: var(--accent-light); }
+  .btn-nav { padding: 8px 16px; font-size: 0.9rem; }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    background: linear-gradient(180deg, var(--navy) 0%, var(--navy-light) 100%);
+    color: #fff;
+    padding: 72px 0 88px;
+  }
+  .hero .container {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 48px;
+    align-items: center;
+  }
+  .hero h1 {
+    font-size: 2.4rem;
+    line-height: 1.15;
+    margin: 0 0 18px;
+    letter-spacing: -0.01em;
+  }
+  .hero p.lead {
+    font-size: 1.1rem;
+    color: rgba(255,255,255,0.82);
+    margin: 0 0 28px;
+    max-width: 46ch;
+  }
+  .hero-ctas { display: flex; gap: 14px; flex-wrap: wrap; }
+  .btn-ghost {
+    background: transparent;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.35);
+  }
+  .btn-ghost:hover { background: rgba(255,255,255,0.08); }
+
+  .code-card {
+    background: #0b1d30;
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px -20px rgba(0,0,0,0.5);
+  }
+  .code-card .code-card-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.04);
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: rgba(255,255,255,0.55);
+  }
+  .code-card pre {
+    margin: 0;
+    padding: 16px;
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: #d7e6f5;
+    overflow-x: auto;
+  }
+  .code-card .tok-key { color: #7cc4ff; }
+  .code-card .tok-str { color: #ffcf87; }
+  .code-card .tok-num { color: #9fe0a0; }
+
+  /* ---------- Section basics ---------- */
+  section { padding: 72px 0; }
+  section.alt { background: var(--bg-alt); }
+  .section-head { text-align: center; max-width: 640px; margin: 0 auto 44px; }
+  .section-head .eyebrow {
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.78rem;
+    font-weight: 700;
+    color: var(--accent);
+  }
+  .section-head h2 { font-size: 1.9rem; margin: 8px 0 10px; letter-spacing: -0.01em; }
+  .section-head p { color: var(--text-muted); font-size: 1.02rem; margin: 0; }
+
+  /* ---------- Who it's for ---------- */
+  .audience-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+  }
+  .audience-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+  }
+  .audience-card h3 { margin: 0 0 10px; font-size: 1.2rem; }
+  .audience-card p { color: var(--text-muted); margin: 0 0 14px; }
+  .audience-card ul { margin: 0; padding-left: 20px; color: var(--text-muted); }
+  .audience-card li { margin-bottom: 6px; }
+  .audience-card .tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 9px;
+    border-radius: 999px;
+    background: rgba(200,149,42,0.12);
+    color: var(--accent);
+    margin-bottom: 12px;
+  }
+
+  /* ---------- How it works ---------- */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 28px;
+  }
+  .step { position: relative; }
+  .step-num {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--navy);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .step h3 { margin: 0 0 8px; font-size: 1.08rem; }
+  .step p { color: var(--text-muted); margin: 0 0 10px; font-size: 0.95rem; }
+  .config-block {
+    background: var(--navy);
+    color: #d7e6f5;
+    border-radius: 8px;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 0.76rem;
+    line-height: 1.55;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  /* ---------- Pricing ---------- */
+  .billing-toggle {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+  }
+  .toggle-track {
+    display: inline-flex;
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 4px;
+  }
+  .toggle-option {
+    border: none;
+    background: transparent;
+    padding: 10px 20px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    cursor: pointer;
+    color: var(--text-muted);
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .toggle-option.active {
+    background: var(--navy);
+    color: #fff;
+  }
+  .save-badge {
+    background: rgba(200,149,42,0.16);
+    color: var(--accent);
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+  }
+  .toggle-option.active .save-badge {
+    background: rgba(255,255,255,0.18);
+    color: var(--accent-light);
+  }
+
+  .founding-banner {
+    max-width: 720px;
+    margin: 0 auto 40px;
+    text-align: center;
+    background: rgba(200,149,42,0.10);
+    border: 1px solid rgba(200,149,42,0.35);
+    border-radius: 10px;
+    padding: 16px 20px;
+    font-size: 0.95rem;
+  }
+  .founding-banner strong { color: var(--accent); }
+  .founding-banner code {
+    background: rgba(200,149,42,0.18);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-weight: 700;
+  }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 28px;
+    max-width: 800px;
+    margin: 0 auto;
+  }
+  .price-card {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 32px;
+    display: flex;
+    flex-direction: column;
+  }
+  .price-card.featured {
+    border-color: var(--navy);
+    box-shadow: 0 20px 40px -24px rgba(15,41,66,0.35);
+    position: relative;
+  }
+  .price-card.featured::before {
+    content: "Most popular";
+    position: absolute;
+    top: -13px;
+    left: 24px;
+    background: var(--navy);
+    color: #fff;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 5px 12px;
+    border-radius: 999px;
+  }
+  .price-card h3 { margin: 0 0 4px; font-size: 1.25rem; }
+  .price-card .tier-desc { color: var(--text-muted); font-size: 0.92rem; margin: 0 0 20px; }
+  .price-value { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+  .price-value .amount { font-size: 2.4rem; font-weight: 700; letter-spacing: -0.02em; }
+  .price-value .period { color: var(--text-muted); font-size: 0.95rem; }
+  .yearly-note { font-size: 0.82rem; color: var(--accent); font-weight: 600; margin-bottom: 20px; min-height: 1.2em; }
+  .price-card ul.features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 28px;
+    flex-grow: 1;
+  }
+  .price-card ul.features li {
+    padding: 8px 0;
+    border-top: 1px solid var(--border);
+    font-size: 0.92rem;
+    color: var(--text);
+    display: flex;
+    gap: 8px;
+  }
+  .price-card ul.features li:first-child { border-top: none; }
+  .check { color: var(--accent); font-weight: 700; }
+  .price-card .btn { text-align: center; width: 100%; }
+  .btn-navy { background: var(--navy); color: #fff; }
+  .btn-navy:hover { background: var(--navy-light); }
+
+  /* ---------- FAQ ---------- */
+  .faq { max-width: 760px; margin: 0 auto; }
+  details {
+    border-bottom: 1px solid var(--border);
+    padding: 18px 0;
+  }
+  details summary {
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after {
+    content: "+";
+    font-size: 1.3rem;
+    color: var(--text-muted);
+    margin-left: 12px;
+  }
+  details[open] summary::after { content: "–"; }
+  details p { color: var(--text-muted); margin: 12px 0 0; font-size: 0.95rem; }
+
+  /* ---------- Footer ---------- */
+  footer {
+    background: var(--navy);
+    color: rgba(255,255,255,0.65);
+    padding: 40px 0;
+    font-size: 0.88rem;
+  }
+  footer .container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  footer a { color: rgba(255,255,255,0.75); text-decoration: none; }
+  footer a:hover { color: #fff; }
+  .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+
+  /* ---------- Responsive ---------- */
+  @media (max-width: 860px) {
+    .hero .container { grid-template-columns: 1fr; }
+    .hero { padding: 48px 0 56px; text-align: left; }
+    .audience-grid { grid-template-columns: 1fr; }
+    .steps { grid-template-columns: 1fr; }
+    .pricing-grid { grid-template-columns: 1fr; }
+    .nav-links { gap: 16px; }
+  }
+  @media (max-width: 560px) {
+    .hero h1 { font-size: 1.85rem; }
+    .nav-links a:not(.btn) { display: none; }
+    section { padding: 52px 0; }
+    .section-head h2 { font-size: 1.55rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container">
+    <a href="#" class="wordmark">County<span>Layer</span></a>
+    <div class="nav-links">
+      <a href="#how-it-works">How it works</a>
+      <a href="#pricing">Pricing</a>
+      <a href="#faq">FAQ</a>
+      <a href="#pricing" class="btn btn-accent btn-nav">Get an API key</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="container">
+    <div>
+      <h1>Give your AI agents direct access to Tulsa County property records</h1>
+      <p class="lead">CountyLayer turns 250,000+ real Tulsa County parcel records — owners, addresses, sale history, assessed values — into a simple API your AI tools can query in real time. No scraping, no manual county-site lookups, no data cleanup.</p>
+      <div class="hero-ctas">
+        <a href="#pricing" class="btn btn-accent">Get your API key</a>
+        <a href="#how-it-works" class="btn btn-ghost">See how it works</a>
+      </div>
+    </div>
+    <div class="code-card">
+      <div class="code-card-header">search_properties("21st and Utica")</div>
+      <pre><span class="tok-key">{</span>
+  <span class="tok-key">"count"</span>: <span class="tok-num">1</span>,
+  <span class="tok-key">"results"</span>: [
+    <span class="tok-key">{</span>
+      <span class="tok-key">"account_no"</span>: <span class="tok-str">"12345-67-89-01234"</span>,
+      <span class="tok-key">"owner_name"</span>: <span class="tok-str">"SMITH JOHN &amp; JANE"</span>,
+      <span class="tok-key">"property_address"</span>: <span class="tok-str">"123 E 21ST ST"</span>,
+      <span class="tok-key">"property_city"</span>: <span class="tok-str">"TULSA"</span>,
+      <span class="tok-key">"property_zip"</span>: <span class="tok-str">"74114"</span>,
+      <span class="tok-key">"total_acct_value"</span>: <span class="tok-num">245000</span>,
+      <span class="tok-key">"sale_date"</span>: <span class="tok-str">"2021-06-15"</span>,
+      <span class="tok-key">"sale_price"</span>: <span class="tok-num">238000</span>
+    <span class="tok-key">}</span>
+  ]
+<span class="tok-key">}</span></pre>
+    </div>
+  </div>
+</header>
+
+<section id="who-its-for" class="alt">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">Who it's for</div>
+      <h2>Built for people who look up property records all day — or build tools that do</h2>
+      <p>Whether you're doing the lookups yourself or wiring an AI agent to do them for you, CountyLayer plugs straight into your workflow.</p>
+    </div>
+    <div class="audience-grid">
+      <div class="audience-card">
+        <span class="tag">Manual plan</span>
+        <h3>Investors, agents &amp; title professionals</h3>
+        <p>You're checking ownership, sale history, and assessed value on individual properties throughout the day — deal research, comps, due diligence.</p>
+        <ul>
+          <li>Real estate investors sourcing off-market deals</li>
+          <li>Agents and appraisers doing property research</li>
+          <li>Title and closing professionals verifying ownership</li>
+        </ul>
+      </div>
+      <div class="audience-card">
+        <span class="tag">Agent plan</span>
+        <h3>PropTech teams &amp; local-data agencies</h3>
+        <p>You're building AI agents, dashboards, or automated workflows that need to query property data programmatically, at higher volume.</p>
+        <ul>
+          <li>Agencies building lead-gen or marketing tools on local data</li>
+          <li>Teams wiring AI agents (Claude, custom bots) into county records</li>
+          <li>Products that need structured Tulsa property data at the API layer</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="how-it-works">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">How it works</div>
+      <h2>From signup to your first query in minutes</h2>
+      <p>CountyLayer speaks MCP (Model Context Protocol) — the open standard AI tools use to connect to external data. You don't need to write a scraper or manage infrastructure.</p>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <h3>Subscribe &amp; get your API key</h3>
+        <p>Choose a plan below and check out securely with Stripe. Your personal API key arrives by email within a few minutes.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <h3>Connect your AI client</h3>
+        <p>Add CountyLayer as an MCP server in Claude Desktop, Claude Code, or any MCP-compatible client using your key:</p>
+        <div class="config-block">{
+  "mcpServers": {
+    "countylayer": {
+      "url": "https://countylayer.com/mcp",
+      "headers": {
+        "Authorization": "Bearer YOUR_API_KEY_HERE"
+      }
+    }
+  }
+}</div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <h3>Start querying</h3>
+        <p>Your agent can now search by address, look up an owner's full property portfolio, or pull a complete property record by account number — live, structured data, no scraping required.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="pricing" class="alt">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">Pricing</div>
+      <h2>Simple plans, cancel anytime</h2>
+      <p>Every plan includes the same three tools — <code>search_properties</code>, <code>lookup_owner</code>, and <code>get_property_details</code> — with different query limits and speed.</p>
+    </div>
+
+    <div class="founding-banner">
+      <strong>Founding member offer</strong> — get 30% off for life with code <code>FOUNDING30</code> at checkout. Limited to the first 20 founding members.
+    </div>
+
+    <div class="billing-toggle">
+      <div class="toggle-track">
+        <button class="toggle-option active" data-period="monthly" onclick="setBilling('monthly')" type="button">Monthly</button>
+        <button class="toggle-option" data-period="yearly" onclick="setBilling('yearly')" type="button">Yearly <span class="save-badge">Save up to 19%</span></button>
+      </div>
+    </div>
+
+    <div class="pricing-grid">
+      <div class="price-card" data-tier="manual">
+        <h3>Manual</h3>
+        <p class="tier-desc">For individual lookups and day-to-day research.</p>
+        <div class="price-value">
+          <span class="amount" data-price>$29</span>
+          <span class="period" data-period>/mo</span>
+        </div>
+        <div class="yearly-note" data-yearly-note></div>
+        <ul class="features">
+          <li><span class="check">✓</span> 1,000 queries per month</li>
+          <li><span class="check">✓</span> 20 requests per minute</li>
+          <li><span class="check">✓</span> All 3 property lookup tools</li>
+          <li><span class="check">✓</span> Email support</li>
+        </ul>
+        <a href="https://buy.stripe.com/test_bJe5kDd0hdAc13h1cTdwc00" class="btn btn-navy" data-cta>Get started</a>
+      </div>
+      <div class="price-card featured" data-tier="agent">
+        <h3>Agent</h3>
+        <p class="tier-desc">For AI agents and automated workflows at scale.</p>
+        <div class="price-value">
+          <span class="amount" data-price>$99</span>
+          <span class="period" data-period>/mo</span>
+        </div>
+        <div class="yearly-note" data-yearly-note></div>
+        <ul class="features">
+          <li><span class="check">✓</span> 10,000 queries per month</li>
+          <li><span class="check">✓</span> 200 requests per minute</li>
+          <li><span class="check">✓</span> All 3 property lookup tools</li>
+          <li><span class="check">✓</span> Priority email support</li>
+        </ul>
+        <a href="https://buy.stripe.com/test_9B614nd0hfIk9zN1cTdwc02" class="btn btn-accent" data-cta>Get started</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="container">
+    <div class="section-head">
+      <div class="eyebrow">FAQ</div>
+      <h2>Common questions</h2>
+    </div>
+    <div class="faq">
+      <details>
+        <summary>What data is included?</summary>
+        <p>Property records for Tulsa County — owner name and mailing address, property address, legal description, sale history, physical characteristics, and assessed value — sourced from Tulsa County's official parcel records via INCOG's public data feed.</p>
+      </details>
+      <details>
+        <summary>Do I need to know how to code?</summary>
+        <p>Not necessarily. If you're using an AI client like Claude Desktop that supports MCP, adding CountyLayer is a short config snippet (shown above) — no coding required. If you're building your own agent or application, you can call the same API directly.</p>
+      </details>
+      <details>
+        <summary>What is MCP, and which tools does this work with?</summary>
+        <p>MCP (Model Context Protocol) is an open standard that lets AI assistants connect to external data sources and tools. CountyLayer works with any MCP-compatible client, including Claude Desktop and Claude Code, as well as custom AI agents built to speak MCP.</p>
+      </details>
+      <details>
+        <summary>What happens if I go over my monthly quota?</summary>
+        <p>Once you reach your plan's monthly query limit, further requests return an error until your billing cycle resets. Requests are never silently throttled or queued — you'll know immediately if you need to upgrade.</p>
+      </details>
+      <details>
+        <summary>Can I cancel anytime?</summary>
+        <p>Yes. Subscriptions are billed monthly or yearly with no long-term contract, and you can cancel anytime from the link in your confirmation email or by contacting support.</p>
+      </details>
+      <details>
+        <summary>How do I apply the FOUNDING30 code?</summary>
+        <p>Click "Get started" on either plan, then enter <code>FOUNDING30</code> in the promo code field on the Stripe checkout page before paying. The discount applies immediately and for the life of your subscription.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container">
+    <div>© <span id="year"></span> CountyLayer. All rights reserved.</div>
+    <div class="footer-links">
+      <a href="mailto:keys@countylayer.com">Support</a>
+      <span style="opacity:0.5;">Terms (coming soon)</span>
+      <span style="opacity:0.5;">Privacy (coming soon)</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+  var PRICES = {
+    manual: {
+      monthly: { price: "$29", period: "/mo", url: "https://buy.stripe.com/test_bJe5kDd0hdAc13h1cTdwc00", note: "" },
+      yearly:  { price: "$290", period: "/yr", url: "https://buy.stripe.com/test_4gM7sL8K10NqfYb6xddwc01", note: "2 months free — save $58/yr" }
+    },
+    agent: {
+      monthly: { price: "$99", period: "/mo", url: "https://buy.stripe.com/test_9B614nd0hfIk9zN1cTdwc02", note: "" },
+      yearly:  { price: "$960", period: "/yr", url: "https://buy.stripe.com/test_cNicN51hz1RueU7g7Ndwc03", note: "Save $228/yr (19%)" }
+    }
+  };
+
+  function setBilling(period) {
+    document.querySelectorAll("[data-tier]").forEach(function (card) {
+      var tier = card.getAttribute("data-tier");
+      var info = PRICES[tier][period];
+      card.querySelector("[data-price]").textContent = info.price;
+      card.querySelector("[data-period]").textContent = info.period;
+      card.querySelector("[data-cta]").href = info.url;
+      card.querySelector("[data-yearly-note]").textContent = info.note;
+    });
+    document.querySelectorAll(".toggle-option").forEach(function (btn) {
+      btn.classList.toggle("active", btn.getAttribute("data-period") === period);
+    });
+  }
+
+  document.getElementById("year").textContent = new Date().getFullYear();
+</script>
+
+</body>
+</html>
