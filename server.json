@@ -1,0 +1,46 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.Esoteric918/countylayer",
+  "title": "CountyLayer",
+  "description": "MCP server for querying Tulsa County, Oklahoma property and parcel data for AI agents.",
+  "version": "1.0.0",
+  "websiteUrl": "https://countylayer.com/",
+  "repository": {
+    "url": "https://github.com/Esoteric918/tulsa_data_mcp",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://countylayer.com/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Bearer <your CountyLayer API key>. Subscribe at https://countylayer.com/#pricing to get one - delivered by email after checkout.",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ],
+  "_meta": {
+    "io.modelcontextprotocol.registry/publisher-provided": {
+      "tools": [
+        {
+          "name": "search_properties",
+          "description": "Look up property records by street address. Matches partial addresses."
+        },
+        {
+          "name": "lookup_owner",
+          "description": "Look up all properties owned by a given name. Matches partial names."
+        },
+        {
+          "name": "get_property_details",
+          "description": "Get the full record for a single property by its account number."
+        }
+      ],
+      "dataCoverage": "Tulsa County, Oklahoma parcel records, ~250,000 parcels, sourced from INCOG's public ArcGIS feed.",
+      "pricing": "Manual: $29/month, 1,000 queries/month. Agent: $99/month, 10,000 queries/month. Full pricing at https://countylayer.com/#pricing."
+    }
+  }
+}
