@@ -3,10 +3,14 @@ control live here. Each test drives billing.py's real handler functions
 against a real Stripe test-mode account and the real (isolated) test DB -
 see conftest.py for the fixtures and the reasoning behind what's real vs.
 stubbed."""
+import asyncio
 import threading
 import time
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
+import requests
 import stripe
 
 import billing
@@ -429,3 +433,78 @@ class TestConcurrency:
         upgrade_applied = key["plan_tier"] == "agent"
         past_due_applied = key["payment_failed_notified_at"] is not None
         assert upgrade_applied or past_due_applied
+
+
+# ---------------------------------------------------------------------------
+# Customer portal (manage-subscription link)
+# ---------------------------------------------------------------------------
+
+class TestPortalSession:
+    def test_create_portal_session_returns_real_stripe_hosted_url(self, stripe_customer):
+        customer, pm = stripe_customer
+
+        url = billing.create_portal_session(customer.id)
+
+        assert url.startswith("https://billing.stripe.com/")
+        # Not just well-formed - genuinely live: a plain GET actually resolves.
+        resp = requests.get(url, timeout=10)
+        assert resp.status_code == 200
+
+
+class TestCustomerTokenSigning:
+    def test_sign_and_verify_round_trips(self):
+        token = billing._sign_customer_token("cus_fake123")
+        assert billing._verify_customer_token(token) == "cus_fake123"
+
+    def test_verify_rejects_tampered_token(self):
+        token = billing._sign_customer_token("cus_fake123")
+        customer_id, mac = token.rsplit(".", 1)
+        tampered = f"{customer_id}.{'0' if mac[0] != '0' else '1'}{mac[1:]}"
+        assert billing._verify_customer_token(tampered) is None
+
+    def test_verify_rejects_token_for_a_different_customer(self):
+        """Confirms the signature is actually bound to the customer_id, not
+        just present - swapping in a different (validly-formatted)
+        customer_id under someone else's mac must fail."""
+        token_a = billing._sign_customer_token("cus_aaa")
+        _, mac_a = token_a.rsplit(".", 1)
+        forged = f"cus_bbb.{mac_a}"
+        assert billing._verify_customer_token(forged) is None
+
+    @pytest.mark.parametrize("garbage", ["", "no-dot-here", ".", "cus_x."], ids=[
+        "empty", "no-dot", "just-dot", "empty-mac",
+    ])
+    def test_verify_rejects_garbage_without_crashing(self, garbage):
+        assert billing._verify_customer_token(garbage) is None
+
+    def test_manage_link_omitted_when_secret_not_configured(self):
+        with patch("billing.PORTAL_LINK_SECRET", None):
+            assert billing._manage_subscription_link("cus_fake123") is None
+
+    def test_manage_link_present_and_verifiable_when_secret_configured(self):
+        link = billing._manage_subscription_link("cus_fake123")
+        assert link.startswith(f"{billing.APP_BASE_URL}/manage-subscription?token=")
+        token = link.split("token=", 1)[1]
+        assert billing._verify_customer_token(token) == "cus_fake123"
+
+
+class TestManageSubscriptionRoute:
+    def test_redirects_to_a_fresh_portal_session_for_valid_token(self, stripe_customer):
+        customer, pm = stripe_customer
+        token = billing._sign_customer_token(customer.id)
+        request = SimpleNamespace(query_params={"token": token})
+
+        response = asyncio.run(billing.manage_subscription_route(request))
+
+        assert response.status_code == 302
+        assert response.headers["location"].startswith("https://billing.stripe.com/")
+
+    def test_rejects_invalid_token(self):
+        request = SimpleNamespace(query_params={"token": "garbage"})
+        response = asyncio.run(billing.manage_subscription_route(request))
+        assert response.status_code == 400
+
+    def test_rejects_missing_token(self):
+        request = SimpleNamespace(query_params={})
+        response = asyncio.run(billing.manage_subscription_route(request))
+        assert response.status_code == 400

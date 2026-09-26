@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Terms of Service — CountyLayer</title>
+<meta name="description" content="CountyLayer's Terms of Service: subscription billing, cancellation, data usage, and acceptable use.">
+<link rel="canonical" href="https://countylayer.com/terms.html">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --navy: #0f2942;
+    --navy-light: #17395a;
+    --accent: #c8952a;
+    --accent-light: #e0ac48;
+    --bg: #ffffff;
+    --bg-alt: #f5f7f9;
+    --border: #e2e8ee;
+    --text: #16202a;
+    --text-muted: #55677a;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.6;
+  }
+  a { color: inherit; }
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  nav.site-nav {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--navy); color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  nav.site-nav .container { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .wordmark { font-weight: 700; font-size: 1.15rem; letter-spacing: -0.01em; text-decoration: none; color: #fff; }
+  .wordmark span { color: var(--accent-light); }
+  .nav-links { display: flex; align-items: center; gap: 28px; }
+  .nav-links a { text-decoration: none; color: rgba(255,255,255,0.85); font-size: 0.95rem; }
+  .nav-links a:hover { color: #fff; }
+  .btn {
+    display: inline-block; padding: 10px 20px; border-radius: 6px; font-weight: 600;
+    font-size: 0.95rem; text-decoration: none; cursor: pointer; border: none;
+  }
+  .btn-accent { background: var(--accent); color: #1a1200; }
+  .btn-accent:hover { background: var(--accent-light); }
+  .btn-nav { padding: 8px 16px; font-size: 0.9rem; }
+
+  .legal { padding: 56px 0 80px; max-width: 760px; margin: 0 auto; }
+  .legal h1 { font-size: 2rem; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .legal .updated { color: var(--text-muted); font-size: 0.9rem; margin: 0 0 40px; }
+  .legal h2 { font-size: 1.2rem; margin: 36px 0 12px; }
+  .legal p { color: var(--text); margin: 0 0 14px; }
+  .legal ul { color: var(--text); padding-left: 20px; margin: 0 0 14px; }
+  .legal li { margin-bottom: 6px; }
+  .legal a.inline { color: var(--navy); font-weight: 600; text-decoration: underline; }
+  .legal .flag {
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin: 0 0 14px;
+  }
+
+  footer {
+    background: var(--navy); color: rgba(255,255,255,0.65);
+    padding: 40px 0; font-size: 0.88rem;
+  }
+  footer .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+  footer a { color: rgba(255,255,255,0.75); text-decoration: none; }
+  footer a:hover { color: #fff; }
+  .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+
+  @media (max-width: 560px) {
+    .nav-links a:not(.btn) { display: none; }
+    .legal { padding: 40px 0 56px; }
+    .legal h1 { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container">
+    <a href="/" class="wordmark">County<span>Layer</span></a>
+    <div class="nav-links">
+      <a href="/#how-it-works">How it works</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/#faq">FAQ</a>
+      <a href="/#pricing" class="btn btn-accent btn-nav">Get an API key</a>
+    </div>
+  </div>
+</nav>
+
+<main class="legal">
+  <h1>Terms of Service</h1>
+  <p class="updated">Last updated: September 2026</p>
+
+  <p>These Terms of Service ("Terms") govern your access to and use of CountyLayer's property-data API and related services (the "Service"), operated under the CountyLayer brand ("CountyLayer," "we," "us"). By subscribing to or using the Service, you agree to these Terms.</p>
+
+  <h2>1. The Service</h2>
+  <p>CountyLayer provides programmatic access to Tulsa County, Oklahoma property and parcel data via an API built on the Model Context Protocol (MCP), for use by AI agents, applications, and individual users. The Service includes the <code>search_properties</code>, <code>lookup_owner</code>, and <code>get_property_details</code> tools, subject to the query volume and rate limits of your subscription plan.</p>
+
+  <h2>2. Subscriptions and Billing</h2>
+  <p>The Service is offered on two subscription tiers, billed monthly or annually in advance through our payment processor, Stripe:</p>
+  <ul>
+    <li><strong>Manual</strong> — $29/month or $290/year</li>
+    <li><strong>Agent</strong> — $99/month or $960/year</li>
+  </ul>
+  <p>Subscriptions automatically renew at the end of each billing period until canceled. Promotional pricing (including the FOUNDING30 offer, 30% off for the life of the subscription, limited to the first 20 redemptions) applies only under the terms disclosed at the time it was offered and does not transfer if you cancel and later resubscribe.</p>
+
+  <h2>3. Cancellation</h2>
+  <p>You may cancel your subscription at any time through the "manage your subscription" link included in your API key delivery email and in any payment-failure notice, which takes you to a secure Stripe-hosted portal where you can cancel, update your payment method, or change plans. You can also request cancellation by emailing <a class="inline" href="mailto:support@countylayer.com">support@countylayer.com</a>.</p>
+  <p>Cancellation takes effect at the end of your current billing period. You retain access through the end of the period you've already paid for. We do not provide partial refunds for unused time in a billing period.</p>
+  <div class="flag">We do not currently have a formal refund policy beyond the above. Payments are non-refundable except where required by applicable law or at our sole discretion on a case-by-case basis.</div>
+
+  <h2>4. Payment Failures</h2>
+  <p>If a renewal payment fails, your API key remains active and we automatically retry the charge over the following weeks. We'll email you to update your payment method. If all retry attempts fail, your subscription will be canceled and your API key revoked.</p>
+
+  <h2>5. Data Source and Disclaimer</h2>
+  <p>Property data provided through the Service is sourced from Tulsa County's official public parcel records via INCOG's public data feed. This data is provided "as is," for informational purposes only. We do not warrant its accuracy, completeness, or timeliness, and it should not be relied upon as the sole basis for legal, financial, or investment decisions — independently verify any information before acting on it.</p>
+
+  <h2>6. Acceptable Use</h2>
+  <p>You may not: resell, redistribute, or republish the underlying data feed as a competing data product; attempt to circumvent your plan's rate limits or query quota; use the Service to violate any applicable law; or attempt to interfere with or gain unauthorized access to the Service or other users' accounts. Your API key is personal to your account and must be kept confidential.</p>
+
+  <h2>7. Account and Data Deletion</h2>
+  <p>Canceling your subscription revokes your API key and access to the Service. We do not currently offer an automated, self-service "delete my data" mechanism. If you'd like your account and usage records deleted, contact <a class="inline" href="mailto:support@countylayer.com">support@countylayer.com</a> and we will handle the request manually.</p>
+
+  <h2>8. Service Availability</h2>
+  <p>The Service is provided on an "as is" and "as available" basis. At this stage, we do not offer a formal uptime service-level agreement (SLA).</p>
+
+  <h2>9. Intellectual Property</h2>
+  <p>CountyLayer retains all rights to its software, branding, and API design. The underlying property records remain public-record information and are not owned by CountyLayer.</p>
+
+  <h2>10. Limitation of Liability</h2>
+  <p>To the maximum extent permitted by law, CountyLayer will not be liable for any indirect, incidental, or consequential damages arising from your use of the Service, or for decisions made in reliance on data provided through it.</p>
+
+  <h2>11. Changes to These Terms</h2>
+  <p>We may update these Terms from time to time. Continued use of the Service after a change takes effect constitutes acceptance of the updated Terms.</p>
+
+  <h2>12. Governing Law</h2>
+  <p>These Terms are governed by the laws of the State of Oklahoma, USA, without regard to conflict-of-law principles.</p>
+
+  <h2>13. Contact</h2>
+  <p>Questions about these Terms can be sent to <a class="inline" href="mailto:support@countylayer.com">support@countylayer.com</a>.</p>
+</main>
+
+<footer>
+  <div class="container">
+    <div>© <span id="year"></span> CountyLayer. All rights reserved.</div>
+    <div class="footer-links">
+      <a href="mailto:support@countylayer.com">Support</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+    </div>
+  </div>
+</footer>
+
+<script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+
+</body>
+</html>

@@ -1,3 +1,5 @@
+import hashlib
+import hmac
 import json
 import logging
 import os
@@ -8,7 +10,7 @@ import anyio
 import requests
 import stripe
 from starlette.requests import Request
-from starlette.responses import JSONResponse
+from starlette.responses import JSONResponse, RedirectResponse
 
 from auth import hash_key
 from db import get_cursor
@@ -21,6 +23,13 @@ stripe.api_key = STRIPE_SECRET_KEY
 
 RESEND_API_KEY = os.environ.get("RESEND_API_KEY")
 RESEND_FROM_EMAIL = os.environ.get("RESEND_FROM_EMAIL", "keys@countylayer.com")
+
+# Signs "manage your subscription" links emailed to customers. Optional - if
+# unset, those links are simply omitted from emails rather than crashing
+# anything (same posture as RESEND_API_KEY being unset).
+PORTAL_LINK_SECRET = os.environ.get("PORTAL_LINK_SECRET")
+STRIPE_PORTAL_CONFIGURATION_ID = os.environ.get("STRIPE_PORTAL_CONFIGURATION_ID")
+APP_BASE_URL = os.environ.get("APP_BASE_URL", "https://countylayer.com")
 
 
 REQUIRED_PRICE_METADATA = ("tier", "monthly_quota", "rate_limit_per_minute")
@@ -64,7 +73,71 @@ def _price_metadata(price_id: str) -> dict:
     }
 
 
-def _deliver_key(email: str | None, raw_key: str, plan_tier: str, key_id: int):
+def _sign_customer_token(customer_id: str) -> str:
+    """Unguessable token identifying a Stripe customer, embedded in the
+    durable "manage your subscription" link emailed to them. Deliberately
+    NOT a short-lived Stripe portal URL itself (see create_portal_session) -
+    this token doesn't expire, so the link keeps working whenever the
+    customer eventually clicks it, even weeks later. Same trust model as
+    the raw API key already emailed elsewhere in this file: whoever holds
+    the link can act as that customer, indefinitely - proportionate to the
+    stakes (manage a subscription) and consistent with this codebase's only
+    other customer-facing credential."""
+    mac = hmac.new(PORTAL_LINK_SECRET.encode(), customer_id.encode(), hashlib.sha256).hexdigest()
+    return f"{customer_id}.{mac}"
+
+
+def _verify_customer_token(token: str) -> str | None:
+    try:
+        customer_id, mac = token.rsplit(".", 1)
+    except ValueError:
+        return None
+    expected = hmac.new(PORTAL_LINK_SECRET.encode(), customer_id.encode(), hashlib.sha256).hexdigest()
+    if not hmac.compare_digest(mac, expected):
+        return None
+    return customer_id
+
+
+def _manage_subscription_link(customer_id: str) -> str | None:
+    if not PORTAL_LINK_SECRET:
+        return None
+    return f"{APP_BASE_URL}/manage-subscription?token={_sign_customer_token(customer_id)}"
+
+
+def create_portal_session(customer_id: str) -> str:
+    """Creates a fresh Stripe-hosted billing portal session and returns its
+    URL. Called at click-time only (from manage_subscription_route), never
+    pre-generated and stored - Stripe's portal session URLs are explicitly
+    short-lived by design, so baking one into an email that might not be
+    opened for weeks would hand the customer a dead link."""
+    kwargs = {"customer": customer_id, "return_url": APP_BASE_URL}
+    if STRIPE_PORTAL_CONFIGURATION_ID:
+        kwargs["configuration"] = STRIPE_PORTAL_CONFIGURATION_ID
+    session = stripe.billing_portal.Session.create(**kwargs)
+    return session.url
+
+
+async def manage_subscription_route(request: Request):
+    """GET /manage-subscription?token=... - the durable link embedded in
+    customer emails. Verifies the token, mints a fresh portal session for
+    that customer, and redirects there. Not registered under
+    EVENT_HANDLERS/_process_event since it's a plain browser-facing
+    redirect, not a Stripe webhook."""
+    token = request.query_params.get("token")
+    customer_id = _verify_customer_token(token) if token else None
+    if not customer_id:
+        return JSONResponse({"error": "invalid or missing token"}, status_code=400)
+
+    try:
+        portal_url = create_portal_session(customer_id)
+    except Exception as e:
+        log.error(f"Failed to create portal session for customer={customer_id}: {e}")
+        return JSONResponse({"error": "could not create billing portal session"}, status_code=502)
+
+    return RedirectResponse(portal_url, status_code=302)
+
+
+def _deliver_key(email: str | None, raw_key: str, plan_tier: str, key_id: int, customer_id: str):
     # Failures here are logged, never raised: the api_key row is already
     # committed by the time this runs, and _process_event's retry-on-error
     # path would otherwise call handle_checkout_completed again on the next
@@ -76,6 +149,12 @@ def _deliver_key(email: str | None, raw_key: str, plan_tier: str, key_id: int):
     if not RESEND_API_KEY:
         log.warning(f"RESEND_API_KEY not configured - cannot deliver api_key id={key_id} to {email!r}, raw key only in this log line: {raw_key}")
         return
+
+    manage_link = _manage_subscription_link(customer_id)
+    manage_link_text = (
+        f"\nManage your subscription (update your payment method, change plans, "
+        f"or cancel) anytime:\n{manage_link}\n"
+    ) if manage_link else ""
 
     try:
         resp = requests.post(
@@ -91,6 +170,7 @@ def _deliver_key(email: str | None, raw_key: str, plan_tier: str, key_id: int):
                     "Keep this key secret - it authenticates every request to the "
                     "MCP server and this is the only time it will be shown. If you "
                     "lose it, contact support to have it reset.\n"
+                    f"{manage_link_text}"
                 ),
             },
             timeout=10,
@@ -101,7 +181,7 @@ def _deliver_key(email: str | None, raw_key: str, plan_tier: str, key_id: int):
         log.error(f"Failed to email api_key id={key_id} to {email!r}: {e} - raw key only in this log line: {raw_key}")
 
 
-def _notify_payment_failed(email: str | None, plan_tier: str, key_id: int):
+def _notify_payment_failed(email: str | None, plan_tier: str, key_id: int, customer_id: str):
     """Unlike _deliver_key, failures here are allowed to raise: the caller
     only commits payment_failed_notified_at once this returns without
     error, so a raise leaves that flag NULL and lets Stripe's webhook
@@ -116,6 +196,11 @@ def _notify_payment_failed(email: str | None, plan_tier: str, key_id: int):
     if not RESEND_API_KEY:
         log.warning(f"RESEND_API_KEY not configured - cannot notify api_key id={key_id} of failed payment")
         return
+
+    manage_link = _manage_subscription_link(customer_id)
+    manage_link_text = (
+        f"\nUpdate your payment method here to avoid any interruption:\n{manage_link}\n"
+    ) if manage_link else ""
 
     resp = requests.post(
         "https://api.resend.com/emails",
@@ -132,6 +217,7 @@ def _notify_payment_failed(email: str | None, plan_tier: str, key_id: int):
                 "succeed, your subscription will be canceled and your API key will be revoked.\n\n"
                 "To avoid any interruption, update your payment method as soon as you can. "
                 "Reply to this email if you need a hand.\n"
+                f"{manage_link_text}"
             ),
         },
         timeout=10,
@@ -170,7 +256,7 @@ def handle_checkout_completed(session: dict):
         key_id = cur.fetchone()["id"]
 
     log.info(f"Created api_key id={key_id} customer={customer_id} subscription={subscription_id} tier={meta['tier']}")
-    _deliver_key(email, raw_key, meta["tier"], key_id)
+    _deliver_key(email, raw_key, meta["tier"], key_id, customer_id)
 
 
 def handle_subscription_updated(subscription: dict):
@@ -257,7 +343,7 @@ def handle_subscription_updated(subscription: dict):
                 # retry-on-error path leaves the webhook to be redelivered
                 # by Stripe, which retries the notification instead of
                 # silently losing it.
-                _notify_payment_failed(customer_email, row["plan_tier"], key_id)
+                _notify_payment_failed(customer_email, row["plan_tier"], key_id, customer_id)
                 cur.execute("UPDATE api_keys SET payment_failed_notified_at = NOW() WHERE id = %s", (key_id,))
             return
 

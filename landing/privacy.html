@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — CountyLayer</title>
+<meta name="description" content="CountyLayer's Privacy Policy: what data we collect, how it's used, and who we share it with.">
+<link rel="canonical" href="https://countylayer.com/privacy.html">
+<meta name="robots" content="noindex">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<style>
+  :root {
+    --navy: #0f2942;
+    --navy-light: #17395a;
+    --accent: #c8952a;
+    --accent-light: #e0ac48;
+    --bg: #ffffff;
+    --bg-alt: #f5f7f9;
+    --border: #e2e8ee;
+    --text: #16202a;
+    --text-muted: #55677a;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: var(--sans);
+    color: var(--text);
+    background: var(--bg);
+    line-height: 1.6;
+  }
+  a { color: inherit; }
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  nav.site-nav {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--navy); color: #fff;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  nav.site-nav .container { display: flex; align-items: center; justify-content: space-between; height: 64px; }
+  .wordmark { font-weight: 700; font-size: 1.15rem; letter-spacing: -0.01em; text-decoration: none; color: #fff; }
+  .wordmark span { color: var(--accent-light); }
+  .nav-links { display: flex; align-items: center; gap: 28px; }
+  .nav-links a { text-decoration: none; color: rgba(255,255,255,0.85); font-size: 0.95rem; }
+  .nav-links a:hover { color: #fff; }
+  .btn {
+    display: inline-block; padding: 10px 20px; border-radius: 6px; font-weight: 600;
+    font-size: 0.95rem; text-decoration: none; cursor: pointer; border: none;
+  }
+  .btn-accent { background: var(--accent); color: #1a1200; }
+  .btn-accent:hover { background: var(--accent-light); }
+  .btn-nav { padding: 8px 16px; font-size: 0.9rem; }
+
+  .legal { padding: 56px 0 80px; max-width: 760px; margin: 0 auto; }
+  .legal h1 { font-size: 2rem; margin: 0 0 6px; letter-spacing: -0.01em; }
+  .legal .updated { color: var(--text-muted); font-size: 0.9rem; margin: 0 0 40px; }
+  .legal h2 { font-size: 1.2rem; margin: 36px 0 12px; }
+  .legal p { color: var(--text); margin: 0 0 14px; }
+  .legal ul { color: var(--text); padding-left: 20px; margin: 0 0 14px; }
+  .legal li { margin-bottom: 6px; }
+  .legal a.inline { color: var(--navy); font-weight: 600; text-decoration: underline; }
+  .legal .flag {
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 12px 16px;
+    font-size: 0.88rem;
+    color: var(--text-muted);
+    margin: 0 0 14px;
+  }
+  .legal table { width: 100%; border-collapse: collapse; margin: 0 0 20px; font-size: 0.92rem; }
+  .legal th, .legal td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .legal th { color: var(--text-muted); font-weight: 600; font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.03em; }
+
+  footer {
+    background: var(--navy); color: rgba(255,255,255,0.65);
+    padding: 40px 0; font-size: 0.88rem;
+  }
+  footer .container { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; }
+  footer a { color: rgba(255,255,255,0.75); text-decoration: none; }
+  footer a:hover { color: #fff; }
+  .footer-links { display: flex; gap: 20px; flex-wrap: wrap; }
+
+  @media (max-width: 560px) {
+    .nav-links a:not(.btn) { display: none; }
+    .legal { padding: 40px 0 56px; }
+    .legal h1 { font-size: 1.6rem; }
+    .legal table, .legal thead, .legal tbody, .legal th, .legal td, .legal tr { display: block; }
+    .legal thead { display: none; }
+    .legal tr { border-bottom: 1px solid var(--border); padding: 10px 0; }
+    .legal td { border: none; padding: 2px 0; }
+    .legal td::before { content: attr(data-label); display: block; font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="site-nav">
+  <div class="container">
+    <a href="/" class="wordmark">County<span>Layer</span></a>
+    <div class="nav-links">
+      <a href="/#how-it-works">How it works</a>
+      <a href="/#pricing">Pricing</a>
+      <a href="/#faq">FAQ</a>
+      <a href="/#pricing" class="btn btn-accent btn-nav">Get an API key</a>
+    </div>
+  </div>
+</nav>
+
+<main class="legal">
+  <h1>Privacy Policy</h1>
+  <p class="updated">Last updated: September 2026</p>
+
+  <p>This Privacy Policy describes what information CountyLayer collects when you use our Service, how it's used, and who we share it with.</p>
+
+  <h2>1. Information We Collect</h2>
+  <table>
+    <thead><tr><th>What</th><th>How it's collected / used</th></tr></thead>
+    <tbody>
+      <tr>
+        <td data-label="What">Email address</td>
+        <td data-label="How">Collected at checkout via Stripe. Used to deliver your API key, send account communications (payment failures, subscription changes), and as your login identifier with our payment processor.</td>
+      </tr>
+      <tr>
+        <td data-label="What">Payment information</td>
+        <td data-label="How">Handled entirely by Stripe, our payment processor. We never receive or store your card details ourselves.</td>
+      </tr>
+      <tr>
+        <td data-label="What">API usage data</td>
+        <td data-label="How">For each API call, we log the tool used, the specific parameters you submitted (e.g. the address, owner name, or account number you searched for), the timestamp, and whether the call succeeded. This is not just an aggregate count of calls — the actual query content is logged. It's used to enforce your plan's monthly quota and rate limit, and for debugging.</td>
+      </tr>
+    </tbody>
+  </table>
+  <div class="flag">Being specific here on purpose: our systems log the actual search terms you submit, not merely how many requests you've made. If that matters to how you use the Service, keep it in mind.</div>
+
+  <h2>2. Property Data</h2>
+  <p>The property records the Service returns are Tulsa County public records sourced via INCOG's public data feed. This data is not personal information collected from you — see our Terms of Service for the disclaimer on its accuracy and intended use.</p>
+
+  <h2>3. Third Parties We Share Data With</h2>
+  <ul>
+    <li><strong>Stripe</strong> — payment processing and subscription billing.</li>
+    <li><strong>Resend</strong> — sends transactional emails (API key delivery, payment-failure notices) on our behalf, from <code>keys@countylayer.com</code>.</li>
+    <li><strong>DigitalOcean</strong> — hosts the infrastructure the Service runs on.</li>
+  </ul>
+  <p>We do not sell your personal information to third parties.</p>
+
+  <h2>4. Data Retention</h2>
+  <p>We retain account and usage data for as long as your account is active, and for a reasonable period afterward for accounting and legal purposes. We do not currently have an automated data-retention or deletion schedule. See Section 5 below for how to request deletion.</p>
+
+  <h2>5. Your Choices</h2>
+  <p>You can update your billing email and payment method anytime through the "manage your subscription" link in your emails, which opens a secure Stripe-hosted portal. To request deletion of your account or usage records, email <a class="inline" href="mailto:support@countylayer.com">support@countylayer.com</a> — we don't yet have an automated self-service deletion tool, so these requests are handled manually.</p>
+
+  <h2>6. Children's Privacy</h2>
+  <p>The Service is not directed at children under 16, and we do not knowingly collect information from them.</p>
+
+  <h2>7. Changes to This Policy</h2>
+  <p>We may update this Privacy Policy from time to time. Continued use of the Service after a change takes effect constitutes acceptance of the updated policy.</p>
+
+  <h2>8. Contact</h2>
+  <p>Questions about this Privacy Policy can be sent to <a class="inline" href="mailto:support@countylayer.com">support@countylayer.com</a>.</p>
+</main>
+
+<footer>
+  <div class="container">
+    <div>© <span id="year"></span> CountyLayer. All rights reserved.</div>
+    <div class="footer-links">
+      <a href="mailto:support@countylayer.com">Support</a>
+      <a href="/terms.html">Terms</a>
+      <a href="/privacy.html">Privacy</a>
+    </div>
+  </div>
+</footer>
+
+<script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+
+</body>
+</html>

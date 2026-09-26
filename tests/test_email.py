@@ -67,6 +67,20 @@ class TestKeyDeliveryEmailContent:
         assert sent["subject"] == "Your CountyLayer API key"
         assert "manual plan" in sent["text"]
 
+    def test_email_includes_a_working_manage_subscription_link(self, mock_resend, stripe_customer):
+        customer, pm = stripe_customer
+        sub = make_subscription(customer.id, pm.id, MANUAL_PRICE)
+        session = fake_checkout_session(customer.id, sub.id)
+
+        with patch_line_items(MANUAL_PRICE):
+            billing.handle_checkout_completed(session)
+
+        sent = mock_resend.call_args.kwargs["json"]
+        expected_link = billing._manage_subscription_link(customer.id)
+        assert expected_link in sent["text"]
+        token = expected_link.split("token=", 1)[1]
+        assert billing._verify_customer_token(token) == customer.id
+
 
 class TestPaymentFailureEmailContent:
     def test_email_has_correct_subject_tier_and_grace_period_language(self, mock_resend, stripe_customer):
@@ -91,6 +105,19 @@ class TestPaymentFailureEmailContent:
         assert "manual plan" in sent["text"]
         assert "API key is still active" in sent["text"]  # confirms the grace-period framing, not an immediate cutoff
         assert "retry the charge" in sent["text"]
+
+    def test_email_includes_a_working_manage_subscription_link(self, mock_resend, stripe_customer):
+        customer, pm = stripe_customer
+        sub = make_subscription(customer.id, pm.id, MANUAL_PRICE)
+        with patch_line_items(MANUAL_PRICE):
+            billing.handle_checkout_completed(fake_checkout_session(customer.id, sub.id))
+        mock_resend.reset_mock()
+
+        billing.handle_subscription_updated({"id": sub.id, "customer": customer.id, "status": "past_due"})
+
+        sent = mock_resend.call_args.kwargs["json"]
+        expected_link = billing._manage_subscription_link(customer.id)
+        assert expected_link in sent["text"]
 
 
 class TestKeyDeliveryFailureHandling:
@@ -172,3 +199,30 @@ class TestPaymentFailureMalformedResponse:
         with get_cursor() as cur:
             cur.execute("SELECT payment_failed_notified_at FROM api_keys WHERE id = %s", (key_id,))
             assert cur.fetchone()["payment_failed_notified_at"] is None
+
+
+class TestManageLinkGracefulDegradation:
+    def test_key_delivery_email_still_sends_without_portal_link_secret(self, mock_resend, stripe_customer):
+        customer, pm = stripe_customer
+        sub = make_subscription(customer.id, pm.id, MANUAL_PRICE)
+
+        with patch_line_items(MANUAL_PRICE), patch("billing.PORTAL_LINK_SECRET", None):
+            billing.handle_checkout_completed(fake_checkout_session(customer.id, sub.id))
+
+        mock_resend.assert_called_once()
+        sent = mock_resend.call_args.kwargs["json"]
+        assert "manage-subscription" not in sent["text"]
+
+    def test_payment_failure_email_still_sends_without_portal_link_secret(self, mock_resend, stripe_customer):
+        customer, pm = stripe_customer
+        sub = make_subscription(customer.id, pm.id, MANUAL_PRICE)
+        with patch_line_items(MANUAL_PRICE):
+            billing.handle_checkout_completed(fake_checkout_session(customer.id, sub.id))
+        mock_resend.reset_mock()
+
+        with patch("billing.PORTAL_LINK_SECRET", None):
+            billing.handle_subscription_updated({"id": sub.id, "customer": customer.id, "status": "past_due"})
+
+        mock_resend.assert_called_once()
+        sent = mock_resend.call_args.kwargs["json"]
+        assert "manage-subscription" not in sent["text"]

@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 from fastmcp import FastMCP
 
 from auth import PostgresApiKeyVerifier
-from billing import stripe_webhook_route
+from billing import manage_subscription_route, stripe_webhook_route
 from db import get_cursor
 from quota import QuotaMiddleware
 from rate_limit import PerKeyRateLimitMiddleware
@@ -31,6 +31,7 @@ mcp.add_middleware(QuotaMiddleware())
 mcp.add_middleware(UsageLoggingMiddleware())
 
 mcp.custom_route("/webhooks/stripe", methods=["POST"])(stripe_webhook_route)
+mcp.custom_route("/manage-subscription", methods=["GET"])(manage_subscription_route)
 
 SEARCH_RESULT_LIMIT = 20
 
